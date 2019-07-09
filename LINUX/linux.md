@@ -1,6 +1,6 @@
 linux 
 
-###### 起步
+###### 实验1 Linux 系统简介
 
 安装程序
 
@@ -9,7 +9,7 @@ sudo apt-get update
 sudo apt-get install <name>
 ```
 
-##### 实验1
+##### 实验2 基本概念及操作
 
 Linux 用户管理
 
@@ -75,7 +75,7 @@ $ ls --help
 
 
 
-##### 实验2 用户及文件权限管理
+##### 实验3 用户及文件权限管理
 
 ###### 查看用户
 
@@ -115,4 +115,50 @@ $ sudo deluser <username> --remove-home
 
 
 ###### linux 文件权限
+
+**查看文件权限**
+
+使用较长格式列出文件
+
+```shell
+$ ls -l
+```
+
+![](https://doc.shiyanlou.com/linux_base/3-9.png/wm)
+
+![](https://raw.githubusercontent.com/zhanyeye/Figure-bed/img/img/20190709133321.png)
+
+**变更文件所有者**
+
+将文件的的所有者设为user, 用户组设置为group
+
+```shell
+$ chown user[:group] file...
+```
+
+**修改文件权限**
+
+![](https://raw.githubusercontent.com/zhanyeye/Figure-bed/img/img/20190709135026.png)
+
++ 二进制数字表示
+
+  ```shell
+  $ chmod --- <file name>    --- 分别代表
+  example:
+  $ chmod 600 test.text  只有拥有者有读写能力
+  ```
+
++ 加减赋值操作
+
+  ```shell
+  $ chmod [g,o,u][+,-][r,w,x] <file name> 
+  example:
+  $ chmod go-rw iphone6   
+  g, o, u  表示 group, others, user
+  +, - 表示增加和去掉相应的权限
+  ```
+
+  
+
+##### 实验4 Linux 目录结构及文件基本操作
 
