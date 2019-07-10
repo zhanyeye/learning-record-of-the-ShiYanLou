@@ -162,3 +162,5 @@ $ chown user[:group] file...
 
 ##### 实验4 Linux 目录结构及文件基本操作
 
+![](https://doc.shiyanlou.com/linux_base/4-1.png/wm)
+
