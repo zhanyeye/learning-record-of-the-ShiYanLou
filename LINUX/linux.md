@@ -451,3 +451,17 @@ $ sudo find /etc/ -name interfaces
 ```
 
 > **注意 find 命令的路径是作为第一个参数的， 基本命令格式为 `find [path][option] [action] `。**
+
+
+
+##### 实验６　文件打包与解压缩 
+
+**zip：**
+打包 ：zip something.zip something （目录请加 -r 参数）
+解包：unzip something.zip
++ 指定路径：-d 参数
+
+**tar：**
+打包：tar -cf something.tar something
+解包：tar -xf something.tar
++ 指定路径：-C 参数
