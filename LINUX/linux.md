@@ -1,6 +1,6 @@
 linux 
 
-###### 实验1 Linux 系统简介
+##### 实验1 Linux 系统简介
 
 安装程序
 
@@ -458,10 +458,282 @@ $ sudo find /etc/ -name interfaces
 
 **zip：**
 打包 ：zip something.zip something （目录请加 -r 参数）
+
++ -r, 参数表示递归打包包含子目录的全部内容，
++ -q, 参数表示为安静模式，即不向屏幕输出信息，
++ -o, 表示输出文件，需在其后紧跟打包输出文件名
++ -9 ~ -1, 设置压缩级别为 9 和 1（9 最大，1 最小），重新打包
++ -e 参数可以创建加密压缩包
++ -l, 参数将 `LF` 转换为 `CR+LF` 
+
 解包：unzip something.zip
+
 + 指定路径：-d 参数
 
 **tar：**
 打包：tar -cf something.tar something
+
++ -c, 表示创建一个 tar 包文件，
++ -f, 用于指定创建的文件名，注意文件名必须紧跟在 `-f` 参数之后
+
 解包：tar -xf something.tar
+
++ -c, 解包一个文件
+
 + 指定路径：-C 参数
++ -t, 只查看不解包文件
++ 现在我们要使用其它的压缩工具创建或解压相应文件只需要更改一个参数即可：
+  + *.tar.gz	-z
+  	 *.tar.xz	-J
+  	 tar.bz2	-j
+
+
+
+##### 实验７　文件系统操作与磁盘管理
+
+###### 查看磁盘和目录的容量
+
+**df**  查看磁盘的容量
+
++ -h 友好的显示大小
+
+  ![](https://raw.githubusercontent.com/zhanyeye/Figure-bed/deepin-pic/imgDeepinScreenshot_select-area_20190718104510.png)
+
+**du** 查看目录的容量
+
++ -h 友好的显示大小
+
++ -d 指定查看目录的深度
+
+  ```
+  # 只查看1级目录的信息
+  $ du -h -d 0 ~
+  # 查看2级
+  $ du -h -d 1 ~
+  ```
+
+###### 简单的磁盘管理
+
+**dd 命令简介**
+
+`dd`命令用于转换和复制文件，不过它的复制不同于`cp`。之前提到过关于 Linux 的很重要的一点，**一切即文件**，在 Linux 上，硬件的设备驱动（如硬盘）和特殊设备文件（如`/dev/zero`和`/dev/random`）都像普通文件一样，只是在各自的驱动程序中实现了对应的功能，dd 也可以读取文件或写入这些文件。
+
+`dd`的命令行语句与其他的 Linux 程序不同，因为它的命令行选项格式为`选项=值`，而不是更标准的`--选项 值`或`-选项=值`。`dd`默认从标准输入中读取，并写入到标准输出中，但可以用选项`if`（input file，输入文件）和`of`（output file，输出文件）改变。
+
+我们先来试试用dd命令从标准输入读入用户的输入到标准输出或者一个文件中：
+
+```shell
+# 输出到文件
+$ dd of=test bs=10 count=1 # 或者 dd if=/dev/stdin of=test bs=10 count=1
+# 输出到标准输出
+$ dd if=/dev/stdin of=/dev/stdout bs=10 count=1
+# 注
+在打完了这个命令后，继续在终端打字，作为你的输入
+```
+
++ `bs`（block size）用于指定块大小（缺省单位为 Byte，也可为其指定如'K'，'M'，'G'等单位）
+
++ `count`用于指定块数量
+
+  > 如果，我指定只读取总共 10 个字节的数据，当我输入了“hello shiyanlou”之后加上空格回车总共 16 个字节（一个英文字符占一个字节）内容，显然超过了设定大小。使用`du`和`cat`命令看到的写入完成文件实际内容确实只有 10 个字节（那个黑底百分号表示这里没有换行符）,而其他的多余输入将被截取并保留在标准输入。
+
+
+
+**使用 dd 命令创建虚拟镜像文件**
+
+从`/dev/zero`设备创建一个容量为 256M 的空文件：
+
+```shell
+$ dd if=/dev/zero of=virtual.img bs=1M count=256
+$ du -h virtual.img
+```
+
+
+
+**使用 mkfs 命令格式化磁盘（我们这里是自己创建的虚拟磁盘镜像）**
+
+我们可以简单的使用下面的命令来将我们的虚拟磁盘镜像格式化为`ext4`文件系统：
+
+```shell
+$ sudo mkfs.ext4 virtual.img
+```
+
+
+
+**使用 mount 命令挂载磁盘到目录树**
+
+> 用户在 Linux/UNIX 的机器上打开一个文件以前，包含该文件的文件系统必须先进行挂载的动作，此时用户要对该文件系统执行 mount 的指令以进行挂载。该指令通常是使用在 USB 或其他可移除存储设备上，而根目录则需要始终保持挂载的状态。又因为 Linux/UNIX 文件系统可以对应一个文件而不一定要是硬件设备，所以可以挂载一个包含文件系统的文件到目录树。
+>
+> Linux/UNIX 命令行的 mount 指令是告诉操作系统，对应的文件系统已经准备好，可以使用了，而该文件系统会对应到一个特定的点（称为挂载点）。挂载好的文件、目录、设备以及特殊文件即可提供用户使用。
+
+我们先来使用`mount`来查看下主机已经挂载的文件系统：
+
+```shell
+sudo mount
+```
+
+> 输出的结果中每一行表示一个设备或虚拟设备,每一行最前面是设备名，然后是 on 后面是挂载点，type 后面表示文件系统类型，再后面是挂载选项（比如可以在挂载时设定以只读方式挂载等等）。
+
+那么我们如何挂载真正的磁盘到目录树呢，`mount`命令的一般格式如下：
+
+```shell
+mount [options] [source] [directory]
+```
+
+一些常用操作：
+
+```
+mount [-o [操作选项]] [-t 文件系统类型] [-w|--rw|--ro] [文件系统源] [挂载点]
+```
+
+现在直接来挂载我们创建的虚拟磁盘镜像到`/mnt`目录：
+
+```
+$ mount -o loop -t ext4 virtual.img /mnt 
+# 也可以省略挂载类型，很多时候 mount 会自动识别
+
+# 以只读方式挂载
+$ mount -o loop --ro virtual.img /mnt
+# 或者mount -o loop,ro virtual.img /mnt
+```
+
+**使用 umount 命令卸载已挂载磁盘**
+
+
+
+##### 实验8　Linux下的帮助命令
+
+###### 内建命令与外部命令
+
+> **内建命令**实际上是 shell 程序的一部分，其中包含的是一些比较简单的 Linux 系统命令，这些命令是写在bash源码的builtins里面的，由 shell 程序识别并在 shell 程序内部完成运行，通常在 Linux 系统加载运行时 shell 就被加载并驻留在系统内存中。而且解析内部命令 shell 不需要创建子进程，因此其执行速度比外部命令快。比如：history、cd、exit 等等。
+
+> **外部命令**是 Linux 系统中的实用程序部分，因为实用程序的功能通常都比较强大，所以其包含的程序量也会很大，在系统加载时并不随系统一起被加载到内存中，而是在需要时才将其调入内存。虽然其不包含在 shell 中，但是其命令执行过程是由 shell 程序控制的。外部命令是在 Bash 之外额外安装的，通常放在/bin，/usr/bin，/sbin，/usr/sbin等等。比如：ls、vi等。
+
+type 命令来区分命令是内建的还是外部的
+
+```
+#得到这样的结果说明是内建命令，正如上文所说内建命令都是在 bash 源码中的 builtins 的.def中
+xxx is a shell builtin
+#得到这样的结果说明是外部命令，正如上文所说，外部命令在/usr/bin or /usr/sbin等等中
+xxx is /usr/bin/xxx
+#若是得到alias的结果，说明该指令为命令别名所设定的名称；
+xxx is an alias for xx --xxx
+```
+
+**help 命令**
+
+help 命令是用于显示 shell 内建命令的简要帮助信息
+
+外部命令基本上都有一个参数--help,这样就可以得到相应的帮助
+
+**man 命令**
+
+例如`man ls`
+
+我们会发现最左上角显示“ LS （1）”，在这里，“ LS ”表示手册名称，而“（1）”表示该手册位于第一章节。这个章节又是什么？在 man 手册中一共有这么几个章节
+
+| 章节数 | 说明                                               |
+| ------ | -------------------------------------------------- |
+| `1`    | Standard commands （标准命令）                     |
+| `2`    | System calls （系统调用）                          |
+| `3`    | Library functions （库函数）                       |
+| `4`    | Special devices （设备说明）                       |
+| `5`    | File formats （文件格式）                          |
+| `6`    | Games and toys （游戏和娱乐）                      |
+| `7`    | Miscellaneous （杂项）                             |
+| `8`    | Administrative Commands （管理员命令）             |
+| `9`    | 其他（Linux特定的）， 用来存放内核例行程序的文档。 |
+
+**info 命令**
+
+> 得到的信息比 man 还要多了，info 来自自由软件基金会的 GNU 项目，是 GNU 的超文本帮助系统，能够更完整的显示出 GNU 信息。所以得到的信息当然更多
+
+```
+# 安装 info
+$ sudo apt-get update
+$ sudo apt-get install info
+# 查看 ls 命令的 info
+$ info ls
+```
+
+
+
+#####  实验9　Linux任务计划crontab
+
+###### crontab 简介
+
+crontab 命令用于设置周期性被执行的指令。
+
+> crontab 命令从输入设备读取指令，并将其存放于 crontab 文件中，以供之后读取和执行。通常，crontab 储存的指令被守护进程激活，crond 为其守护进程，crond 常常在后台运行，每一分钟会检查一次是否有预定的作业需要执行。
+>
+> 通过 crontab 命令，我们可以在固定的间隔时间执行指定的系统指令或 shell　script 脚本。时间间隔的单位可以是分钟、小时、日、月、周的任意组合。
+
+crontab 的格式
+
+```
+# Example of job definition:
+# .---------------- minute (0 - 59)
+# |  .------------- hour (0 - 23)
+# |  |  .---------- day of month (1 - 31)
+# |  |  |  .------- month (1 - 12) OR jan,feb,mar,apr ...
+# |  |  |  |  .---- day of week (0 - 6) (Sunday=0 or 7) OR sun,mon,tue,wed,thu,fri,sat
+# |  |  |  |  |
+# *  *  *  *  * user-name command to be executed
+```
+
+添加一个计划任务
+
+```shell
+crontab -e
+```
+
+我们通过这样的一个例子来完成一个任务的添加，在文档的最后一排加上这样一排命令,该任务是每分钟我们会在/home/shiyanlou目录下创建一个以当前的年月日时分秒为名字的空白文件
+
+```shell
+*/1 * * * * touch /home/shiyanlou/$(date +\%Y\%m\%d\%H\%M\%S)
+```
+
+> 注意 “ % ” 在 crontab 文件中，有结束命令行、换行、重定向的作用，前面加 ” \ ” 符号转义，否则，“ % ” 符号将执行其结束命令行或者换行的作用，并且其后的内容会被做为标准输入发送给前面的命令。
+
+添加成功后我们会得到最后一排 installing new crontab 的一个提示
+
+指令来查看我们添加了哪些任务 `crontab -l`
+
+虽然我们添加了任务，但是如果 cron 的守护进程并没有启动，它根本都不会监测到有任务，当然也就不会帮我们执行，我们可以通过以下2种方式来确定我们的 cron 是否成功的在后台启动，默默的帮我们做事，若是没有就得执行`sudo cron －f &`
+
+```shell
+ps aux | grep cron
+
+or
+
+pgrep cron
+```
+
+当我们并不需要这个任务的时候我们可以使用这么一个命令去删除任务
+
+```shell
+crontab -r
+```
+
+
+
+###### crontab 的深入
+
+每个用户使用 `crontab -e` 添加计划任务，都会在 `/var/spool/cron/crontabs` 中添加一个该用户自己的任务文档，这样目的是为了隔离。
+
+ 如果是系统级别的定时任务，应该如何处理？只需要以 sudo 权限编辑 `/etc/crontab` 文件就可以。
+
+cron 服务监测时间最小单位是分钟，所以 cron 会每分钟去读取一次 /etc/crontab 与 /var/spool/cron/crontabs 里面的內容。 
+
+在 /etc 目录下，cron 相关的目录有下面几个：
+
+![](https://raw.githubusercontent.com/zhanyeye/Figure-bed/deepin-pic/imgDeepinScreenshot_select-area_20190718224433.png)
+
+每个目录的作用：
+
+1. /etc/cron.daily，目录下的脚本会每天执行一次，在每天的6点25分时运行；
+2. /etc/cron.hourly，目录下的脚本会每个小时执行一次，在每小时的17分钟时运行；
+3. /etc/cron.monthly，目录下的脚本会每月执行一次，在每月1号的6点52分时运行；
+4. /etc/cron.weekly，目录下的脚本会每周执行一次，在每周第七天的6点47分时运行；
+
+系统默认执行时间可以根据需求进行修改。
