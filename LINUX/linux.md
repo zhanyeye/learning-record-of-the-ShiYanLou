@@ -478,7 +478,7 @@ $ sudo find /etc/ -name interfaces
 
 解包：tar -xf something.tar
 
-+ -c, 解包一个文件
++ -x, 解包一个文件
 
 + 指定路径：-C 参数
 + -t, 只查看不解包文件
@@ -737,3 +737,134 @@ cron 服务监测时间最小单位是分钟，所以 cron 会每分钟去读取
 4. /etc/cron.weekly，目录下的脚本会每周执行一次，在每周第七天的6点47分时运行；
 
 系统默认执行时间可以根据需求进行修改。
+
+
+
+##### 实验10 命令执行顺序控制与管道
+
+###### 有选择的执行命令
+
+`&&` 就是用来实现选择性执行的，它表示如果前面的命令执行结果（不是表示终端输出的内容，而是表示命令执行状态的结果）返回0则执行后面的，否则不执行
+
+`|| `表示逻辑或，同样 Shell 也有一个`||`，它们的区别就在于，shell中的这两个符号除了也可用于表示逻辑与和或之外，就是可以实现这里的命令执行顺序的简单控制。`||`在这里就是与`&&`相反的控制效果，当上一条命令执行结果为≠0($?≠0)时则执行它后面的命令
+
+ 可以从`$?`环境变量获取上一次命令的返回结果
+
+```shell
+which cowsay>/dev/null && echo "exist" || echo "not exist"
+```
+
+###### 管道
+
+它表现出来的形式就是将前面每一个进程的输出(stdout)直接作为下一个进程的输入(stdin)。
+
+ ```shell
+$ ls -al /etc | less
+ ```
+
+###### cut命令,打印每一行的某个字段
+
+打印`/etc/passwd`文件中以`:`为分隔符的第1个字段和第6个字段分别表示用户名和其家目录：
+
+```shell
+$ cut /etc/passwd -d ':' -f 1,6
+```
+
++ -d --delimiter=DELIM    :  use DELIM instead of TAB for field delimiter
++ --fields=LIST : select  only  these fields;  also print any line that contains no delimiter character, unless the -s option is specified
+
+打印`/etc/passwd`文件中每一行的前/? N个字符：
+
+```shell
+# 前五个（包含第五个）
+$ cut /etc/passwd -c -5
+# 前五个之后的（包含第五个）
+$ cut /etc/passwd -c 5-
+# 第五个
+$ cut /etc/passwd -c 5
+# 2到5之间的（包含第五个）
+$ cut /etc/passwd -c 2-5
+```
+
+###### grep命令,在文本中或stdin中查找匹配字符串
+
+`grep`命令的一般形式为：
+
+```shell
+grep [命令选项]... 用于匹配的表达式 [文件]...
+```
+
+我们搜索`/home/shiyanlou`目录下所有包含"shiyanlou"的文本文件，并显示出现在文本中的行号：
+
+```shell
+$ grep -rnI "shiyanlou" ~
+```
+
+`r` 参数表示递归搜索子目录中的文件,`-n`表示打印匹配项行号，`-I`表示忽略二进制文件
+
+也可以在匹配字段中使用正则表达式，下面简单的演示：
+
+```shell
+# 查看环境变量中以"yanlou"结尾的字符串
+$ export | grep ".*yanlou$"
+# 其中$就表示一行的末尾。
+```
+
+###### wc 命令，简单小巧的计数工具
+
+wc 命令用于统计并输出一个文件中行、单词和字节的数目，比如输出`/etc/passwd`文件的统计信息：
+
+```shell
+$ wc /etc/passwd
+  38   62 2254 /etc/passwd
+```
+
+分别只输出行数、单词数、字节数、字符数和输入文本中最长一行的字节数：
+
+```shell
+# 行数
+$ wc -l /etc/passwd
+# 单词数
+$ wc -w /etc/passwd
+# 字节数
+$ wc -c /etc/passwd
+# 字符数
+$ wc -m /etc/passwd
+# 最长行字节数
+$ wc -L /etc/passwd
+```
+
+###### sort 排序命令
+
+ 默认为字典排序：
+
+```shell
+$ cat /etc/passwd | sort
+```
+
+反转排序：
+
+```shell
+$ cat /etc/passwd | sort -r
+```
+
+按特定字段排序：
+
+```shell
+$ cat /etc/passwd | sort -t':' -k 3
+# 上面的-t参数用于指定字段的分隔符，这里是以":"作为分隔符；-k 字段号用于指定对哪一个字段进行排序
+
+# 如果要按照数字排序就要加上-n参数：
+$ cat /etc/passwd | sort -t':' -k 3 -n
+```
+
+###### uniq 去重命令
+
+ uniq命令只能去连续重复的行，不是全文去重, 可以先排序,在去重
+
+```shell
+$ history | cut -c 8- | cut -d ' ' -f 1 | sort | uniq
+# 或者
+$ history | cut -c 8- | cut -d ' ' -f 1 | sort -u
+```
+
