@@ -1,6 +1,5 @@
 # learning-record-of-the-ShiYanLou
 实验楼学习记录  
-邀请码：`2651LTV`
 
 学习路径：
 1. c++   `2019-07-08`
